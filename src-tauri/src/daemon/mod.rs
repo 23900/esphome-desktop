@@ -31,6 +31,8 @@ pub struct DaemonManager {
     logs_dir: PathBuf,
     /// Dashboard port
     port: u16,
+    /// Dashboard host binding address
+    host: String,
     /// Whether the daemon is running
     running: Arc<AtomicBool>,
     /// PID of the dashboard child, mirrored as an atomic so synchronous
@@ -74,6 +76,11 @@ impl DaemonManager {
             config_dir,
             logs_dir,
             port: settings.port,
+            host: if settings.expose_host {
+                "0.0.0.0".to_string()
+            } else {
+                "127.0.0.1".to_string()
+            },
             running: Arc::new(AtomicBool::new(false)),
             dashboard_pid: Arc::new(AtomicI32::new(0)),
             use_device_builder: Arc::new(AtomicBool::new(settings.backend.is_builder())),
@@ -118,7 +125,9 @@ impl DaemonManager {
         // Open log file for stdout and stderr combined
         let log_path = self.logs_dir.join("dashboard.log");
         let log_file = File::create(&log_path).context("Failed to create log file")?;
-        let log_file_clone = log_file.try_clone().context("Failed to clone log file handle")?;
+        let log_file_clone = log_file
+            .try_clone()
+            .context("Failed to clone log file handle")?;
 
         info!("{} logs: {:?}", backend_name, log_path);
 
@@ -133,7 +142,7 @@ impl DaemonManager {
                 "esphome_device_builder",
                 config_arg,
                 "--host",
-                "127.0.0.1",
+                &self.host,
                 "--port",
                 &port_arg,
             ]);
@@ -144,7 +153,7 @@ impl DaemonManager {
                 "dashboard",
                 config_arg,
                 "--address",
-                "127.0.0.1",
+                &self.host,
                 "--port",
                 &port_arg,
             ]);
@@ -362,7 +371,10 @@ impl DaemonManager {
                 // Windows is out of scope for this fix.
                 #[cfg(not(unix))]
                 Err(_) => {
-                    warn!("Timeout waiting for {} to exit; force-killing.", backend_name);
+                    warn!(
+                        "Timeout waiting for {} to exit; force-killing.",
+                        backend_name
+                    );
                     let _ = child.kill().await;
                 }
             }
