@@ -84,6 +84,10 @@ pub struct Settings {
     #[serde(default = "default_port")]
     pub port: u16,
 
+    /// Expose dashboard to the local network (binds to 0.0.0.0 instead of 127.0.0.1)
+    #[serde(default)]
+    pub expose_host: bool,
+
     /// Custom config directory (None = use default)
     #[serde(default)]
     pub config_dir: Option<PathBuf>,
@@ -121,6 +125,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             port: DEFAULT_PORT,
+            expose_host: false,
             config_dir: None,
             open_on_start: true,
             check_updates: true,

@@ -31,6 +31,8 @@ pub struct DaemonManager {
     logs_dir: PathBuf,
     /// Dashboard port
     port: u16,
+    /// Dashboard host binding address
+    host: String,
     /// Whether the daemon is running
     running: Arc<AtomicBool>,
     /// PID of the dashboard child, mirrored as an atomic so synchronous
@@ -74,6 +76,11 @@ impl DaemonManager {
             config_dir,
             logs_dir,
             port: settings.port,
+            host: if settings.expose_host {
+                "0.0.0.0".to_string()
+            } else {
+                "127.0.0.1".to_string()
+            },
             running: Arc::new(AtomicBool::new(false)),
             dashboard_pid: Arc::new(AtomicI32::new(0)),
             use_device_builder: Arc::new(AtomicBool::new(settings.backend.is_builder())),
@@ -133,7 +140,7 @@ impl DaemonManager {
                 "esphome_device_builder",
                 config_arg,
                 "--host",
-                "127.0.0.1",
+                &self.host,
                 "--port",
                 &port_arg,
             ]);
@@ -144,7 +151,7 @@ impl DaemonManager {
                 "dashboard",
                 config_arg,
                 "--address",
-                "127.0.0.1",
+                &self.host,
                 "--port",
                 &port_arg,
             ]);
