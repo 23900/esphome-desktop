@@ -84,6 +84,10 @@ pub struct Settings {
     #[serde(default = "default_port")]
     pub port: u16,
 
+    /// Dashboard host address
+    #[serde(default = "default_host")]
+    pub host: String,
+
     /// Custom config directory (None = use default)
     #[serde(default)]
     pub config_dir: Option<PathBuf>,
@@ -113,6 +117,10 @@ fn default_port() -> u16 {
     DEFAULT_PORT
 }
 
+fn default_host() -> String {
+    "127.0.0.1".to_string()
+}
+
 fn default_true() -> bool {
     true
 }
@@ -121,6 +129,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             port: DEFAULT_PORT,
+            host: default_host(),
             config_dir: None,
             open_on_start: true,
             check_updates: true,
